@@ -22,15 +22,15 @@ import android.widget.Button;
 import android.widget.Toast;
 
 public class MainActivity extends Activity implements OnClickListener{
-	HttpClient httpclient = new DefaultHttpClient();
-	HttpPost httppost = new HttpPost("http://nenok.herokuapp.com/login");
+//	HttpClient httpclient = new DefaultHttpClient();
+//	HttpPost httppost = new HttpPost("http://nenok.herokuapp.com/api/users");
 	Button buttonStart;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+		Toast.makeText( getApplicationContext(), "Open!", Toast.LENGTH_SHORT).show();
 		buttonStart = (Button) findViewById(R.id.button1);
 		buttonStart.setOnClickListener(this);
 		
@@ -39,19 +39,23 @@ public class MainActivity extends Activity implements OnClickListener{
 	@Override
 	public void onClick(View v) {
 
-		try {
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-			nameValuePairs.add(new BasicNameValuePair("email", "marka@sourcepad.com"));
-		    nameValuePairs.add(new BasicNameValuePair("password", "passsword"));
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-			HttpResponse response = httpclient.execute(httppost);
-			
-			Toast.makeText( getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
-		        
-		} catch (IOException e) {
-			Toast.makeText( getApplicationContext(), e.toString(), Toast.LENGTH_SHORT).show();
-		      
-		} 
+		new LoginService().execute("http://nenok.herokuapp.com/api/users");
+		
+//		try {
+//			Toast.makeText( getApplicationContext(), "Click!", Toast.LENGTH_SHORT).show();
+//		
+//			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+//			nameValuePairs.add(new BasicNameValuePair("email", "marka@sourcepad.com"));
+//		    nameValuePairs.add(new BasicNameValuePair("password", "passsword"));
+//			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+//			HttpResponse response = httpclient.execute(httppost);
+//			
+//			Toast.makeText( getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
+//		        
+//		} catch (IOException e) {
+//			Toast.makeText( getApplicationContext(), e.toString(), Toast.LENGTH_SHORT).show();
+//		      
+//		} 
 	}
 
 
