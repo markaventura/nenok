@@ -33,6 +33,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
@@ -44,33 +46,42 @@ import android.widget.Toast;
 public class ReceiverService extends BroadcastReceiver{
 	 public SQLiteDatabase myDataBase; 
 	 SmsManager smsManager;
+	 String sender = "";
+	 String msgBody = "";
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		Bundle bundle = intent.getExtras();
 		SmsMessage[] msgs = null;
+		
         String str = "";
-        
+//        String sender;
         if (bundle != null) {
         	Object[] pdus = (Object[]) bundle.get("pdus");
         	msgs = new SmsMessage[pdus.length];
         	for (int i=0; i<msgs.length; i++){
-                msgs[i] = SmsMessage.createFromPdu((byte[])pdus[i]);                
+        		
+                msgs[i] = SmsMessage.createFromPdu((byte[])pdus[i]);
+                msgBody = msgs[i].getMessageBody().toString();
+                sender = msgs[i].getOriginatingAddress();
                 str += "SMS sds " + msgs[i].getOriginatingAddress();                     
                 str += " :";
                 str += msgs[i].getMessageBody().toString();
                 str += "\n";  
         	}
         }
-        smsManager = SmsManager.getDefault();
+//        senderNumber = sender;
+        if ("Please give me back my phone! Please! Please!".equals(msgBody)){
+        	smsManager = SmsManager.getDefault();
             //---display the new SMS message---
-//            Toast.makeText(context, str + " " + "from ALVIN!!!!", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, str + " ", Toast.LENGTH_LONG).show();
             Log.v("body:", str);
             //--on GPS
             setGPSOn(context);
             
             LocationListener mlocListener = new MyLocationListener(context);
             Log.v("mlocListener:", mlocListener.toString());
-            
+        	
+        }
 	}
         
     private void setGPSOn(Context context) {
@@ -121,11 +132,11 @@ public class ReceiverService extends BroadcastReceiver{
 			this.context = context;
 			dh = new DBHelper(context.getApplicationContext());
 			locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 100000, 0, this);
+			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 600000, 0, this);
             if (haveNetworkConnection()) {
-            	locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 100000, 0, this);
+            	locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 600000, 0, this);
             }else{
-            	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100000, 0, this);
+            	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 600000, 0, this);
             }
             
             Log.v("network:", Boolean.toString(haveNetworkConnection()));
@@ -134,6 +145,7 @@ public class ReceiverService extends BroadcastReceiver{
 
 		@Override
 		public void onLocationChanged(Location location) {
+			
 			Log.v("changed : ", "changed!");
 //			dh.deleteAll();
 //			location.getLatitude();
@@ -144,7 +156,7 @@ public class ReceiverService extends BroadcastReceiver{
 			String myEmail=dh.selectAll().get(0).toString();
 			String myToken=dh.selectAll().get(1).toString();
 			int i = (int) (new Date().getTime()/1000L);
-			
+			int a = (int) location.getTime();
 //			Log.v("email : ", myEmail);
 //			Log.v("long : ", Double.toString(location.getLongitude()));
 //			Log.v("lat : ", Double.toString(location.getLatitude()));
@@ -158,9 +170,14 @@ public class ReceiverService extends BroadcastReceiver{
 //					myToken,
 //					i
 //					);
-			dh.insert2(Double.toString(location.getLongitude()) + "-" + Double.toString(location.getLatitude()) + "-" + i);
+			
+			dh.insert2(Double.toString(location.getLongitude()) + "-" + Double.toString(location.getLatitude()) + "-" + a);
+			SmsManager smsManager = SmsManager.getDefault();
+//			Log.v("sender : ", sender);
+			smsManager.sendTextMessage(sender, null, "Last Location \n " + "Longitude:\n" + location.getLongitude() + "\n" + "Latitude:\n" +  Double.toString(location.getLatitude()), null, null);
 			if (haveNetworkConnection()) {
 				TelephonyManager tMgr = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+				
 				String mPhoneNumber = tMgr.getLine1Number();
 				Log.v("number : ", mPhoneNumber);
 				
@@ -168,7 +185,7 @@ public class ReceiverService extends BroadcastReceiver{
 			    JSONObject jsonObjectNumber = new JSONObject();
 			    try {
 			    	jsonObjectNumber.accumulate("value", mPhoneNumber);
-			    	jsonObjectNumber.accumulate("timestamp", i);
+			    	jsonObjectNumber.accumulate("timestamp", a);
 				  } catch (JSONException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -205,52 +222,56 @@ public class ReceiverService extends BroadcastReceiver{
 				int size = locations.size();
 			    for (int l=0; l<size; l++)
 			    {
-			      String json;
-			      String[] locationSplit = locations.get(l).split("-");
-			      JSONObject jsonObject = new JSONObject();
-		          try {
-					jsonObject.accumulate("longitude", locationSplit[0]);
-					jsonObject.accumulate("latitude", locationSplit[1]);
-			        jsonObject.accumulate("timestamp", locationSplit[2]);
-				  } catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				  }
-		          
-		 
-		            // 4. convert JSONObject to JSON to String
-		          json = jsonObject.toString();
-		          HttpClient client = new DefaultHttpClient();
-//		          HttpPost post = new HttpPost("http://nenok.herokuapp.com/api/gps");
-		          HttpPost post = new HttpPost("http://nenok.herokuapp.com/api/gps");
-		          
-		          List<NameValuePair> pairs = new ArrayList<NameValuePair>();
-		          pairs.add(new BasicNameValuePair("email", myEmail));
-		          pairs.add(new BasicNameValuePair("token", myToken));
-		          pairs.add(new BasicNameValuePair("gps", "[" + json +"]"));
-		          try {
-					post.setEntity(new UrlEncodedFormEntity(pairs));
-					} catch (UnsupportedEncodingException e) {
+			      if (haveNetworkConnection()) {
+				      String json;
+				      String[] locationSplit = locations.get(l).split("-");
+				      JSONObject jsonObject = new JSONObject();
+			          try {
+						jsonObject.accumulate("longitude", locationSplit[0]);
+						jsonObject.accumulate("latitude", locationSplit[1]);
+				        jsonObject.accumulate("timestamp", locationSplit[2]);
+					  } catch (JSONException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					  }
+			          
+			 
+			            // 4. convert JSONObject to JSON to String
+			          json = jsonObject.toString();
+			          HttpClient client = new DefaultHttpClient();
+	//		          HttpPost post = new HttpPost("http://nenok.herokuapp.com/api/gps");
+			          HttpPost post = new HttpPost("http://nenok.herokuapp.com/api/gps");
+			          
+			          List<NameValuePair> pairs = new ArrayList<NameValuePair>();
+			          pairs.add(new BasicNameValuePair("email", myEmail));
+			          pairs.add(new BasicNameValuePair("token", myToken));
+			          pairs.add(new BasicNameValuePair("gps", "[" + json +"]"));
+			          try {
+						post.setEntity(new UrlEncodedFormEntity(pairs));
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+			          
+			          HttpResponse response = null;
+			          try {
+						response = client.execute(post);
+					} catch (ClientProtocolException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-		          
-		          HttpResponse response = null;
-		          try {
-					response = client.execute(post);
-				} catch (ClientProtocolException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		          Log.v("response : ", response.getStatusLine().toString());
-//		          {email: рс, token: рс, gps: JSON({longitude: 1, latitude: 1, timestamp: Unix time in integer})}
+			          Log.v("response : ", response.getStatusLine().toString());
+	//		          {email: рс, token: рс, gps: JSON({longitude: 1, latitude: 1, timestamp: Unix time in integer})}
+			    } else {
+			    	Log.v("no network : ", "");
 			    }
-			    
+			  }
 			    
 			}
+			
 //			myDataBase.close();
 //			String Text = "My current location is: " + "Latitud = " + location.getLatitude() + "Longitud = " + location.getLongitude();
 //			Toast.makeText( context.getApplicationContext(), Text, Toast.LENGTH_SHORT).show();

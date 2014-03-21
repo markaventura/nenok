@@ -121,7 +121,7 @@ public class MainActivity extends Activity implements OnClickListener{
 		protected String doInBackground(String... params) {
 			publishProgress("Sleeping...");
 			try {
-				resp = "Slept for  milliseconds";
+//				resp = "Slept for  milliseconds";
 				Log.v("email", this.username);
 				Log.v("password", this.password);
 				
