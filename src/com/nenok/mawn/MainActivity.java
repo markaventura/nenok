@@ -21,6 +21,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -35,6 +36,7 @@ public class MainActivity extends Activity implements OnClickListener{
 	TextView respResult;
 	String username, password;
 	private DBHelper dh;
+	protected SQLiteDatabase db;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +60,8 @@ public class MainActivity extends Activity implements OnClickListener{
 	public void onClick(View v) {
 		username = usernameFld.getText().toString();
 		password = passwordFld.getText().toString();
-
-		new LoginService(username, password, getApplicationContext()).execute("http://nenok.herokuapp.com/api/users");
+		this.dh = new DBHelper(getApplicationContext());
+		new LoginService(this.dh, username, password, getApplicationContext()).execute("http://nenok.herokuapp.com/api/users");
 	}
 	
 	public class LoginService extends AsyncTask<String, String, String> {
@@ -75,15 +77,17 @@ public class MainActivity extends Activity implements OnClickListener{
 		
 		private String resp;
 		
-		public LoginService(String username, String password, Context context) {
+		public LoginService(DBHelper dh, String username, String password, Context context) {
 			this.username = username;
 			this.password = password;
+			this.dh = dh;
 		}
 
 		@Override
 		protected String doInBackground(String... params) {
+			publishProgress("Sleeping...");
 			try {
-		        
+				resp = "Slept for  milliseconds";
 				Log.v("email", this.username);
 				Log.v("password", this.password);
 				
@@ -95,17 +99,24 @@ public class MainActivity extends Activity implements OnClickListener{
 			
 				String responseBody = EntityUtils.toString(response.getEntity());
 				JSONObject jsonResponse=new JSONObject(responseBody);
-				Log.v("Response code:", Long.toString(response.getStatusLine().getStatusCode()));
+				
 				Log.v("body:", responseBody);
-				Log.v("token:", jsonResponse.getString("token").toString());
 				responseCode = Long.toString(response.getStatusLine().getStatusCode());
-				message = jsonResponse.getString("message").toString();
-				token = jsonResponse.getString("token").toString();
-				if (responseCode.equals("200")){
-					resp = token;
+				Log.v("Response code:", responseCode);
+				Log.v("response", responseCode);
+				if ("200".equals(responseCode)){
+					token = jsonResponse.getString("token").toString();
+					Log.v("asd", "asds");
+					this.dh.insert(this.username);
+					this.dh.insert(this.token);
+					resp = "Login successfully";
 				}else{
+					message = jsonResponse.getString("message").toString();
+					Log.v("message", message);
+//					respResult.setText(message);
 					resp = message;
 				}
+				
 			} catch (IOException e) {
 				Log.v("Error:", e.toString());      
 			} catch (JSONException e) {
@@ -120,8 +131,13 @@ public class MainActivity extends Activity implements OnClickListener{
 		   // execution of result of Long time consuming operation
 			respResult.setText(result);
 		  }
-
 	}
-
-
+	protected void onDestroy() 
+	{
+	    super.onDestroy();
+	    if (db != null) 
+	    {
+	        db.close();
+	    }
+	}
 }
