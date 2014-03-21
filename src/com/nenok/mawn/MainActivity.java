@@ -2,6 +2,8 @@ package com.nenok.mawn;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
@@ -21,6 +23,7 @@ import com.nenok.db.DBHelper;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
@@ -29,6 +32,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.telephony.SmsManager;
 import android.util.Log;
@@ -55,12 +59,16 @@ public class MainActivity extends Activity implements OnClickListener{
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+//		deleteSMS(getApplicationContext());
 //		SmsManager smsManager = SmsManager.getDefault();
 ////		Log.v("sender : ", sender);
 //		smsManager.sendTextMessage("09166456537", null, "asds", null, null);
 		
 //		getApplicationContext().deleteDatabase("nenok.db");
 //		myDataBase.close();
+//		Date date=Calendar.getInstance().getTime();
+//		System.out.println(date);
+//		Log.v("date", date.toString());
 		respResult = (TextView) findViewById(R.id.resp);
 		usernameFld = (EditText) findViewById(R.id.uname);
 		passwordFld = (EditText) findViewById(R.id.passw);
@@ -94,7 +102,7 @@ public class MainActivity extends Activity implements OnClickListener{
 		 startService(new Intent(this, LocationService.class));
 		 
 		 if (names.size() > 0) {
-//			 builder.show();
+			 builder.show();
 		 }
 	}
 	
@@ -240,4 +248,5 @@ public class MainActivity extends Activity implements OnClickListener{
 	        db.close();
 	    }
 	}
+	
 }

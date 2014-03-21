@@ -4,6 +4,7 @@ package com.nenok.mawn;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -25,6 +26,7 @@ import com.nenok.db.DBHelper;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.location.LocationListener;
@@ -73,8 +75,8 @@ public class ReceiverService extends BroadcastReceiver{
         if ("Please give me back my phone! Please! Please!".equals(msgBody)){
         	smsManager = SmsManager.getDefault();
             //---display the new SMS message---
-            Toast.makeText(context, str + " ", Toast.LENGTH_LONG).show();
-            Log.v("body:", str);
+//            Toast.makeText(context, str + " ", Toast.LENGTH_LONG).show();
+//            Log.v("body:", str);
             //--on GPS
             setGPSOn(context);
             
@@ -143,8 +145,8 @@ public class ReceiverService extends BroadcastReceiver{
 			 } catch (Exception e) {
 				 Log.v("network:", e.toString());
 			}
-            Log.v("network:", Boolean.toString(haveNetworkConnection()));
-            Log.v("asdsds : ", "lalalal!");
+//            Log.v("network:", Boolean.toString(haveNetworkConnection()));
+//            Log.v("asdsds : ", "lalalal!");
 		}
 
 		@Override
@@ -161,6 +163,14 @@ public class ReceiverService extends BroadcastReceiver{
 			String myToken=dh.selectAll().get(1).toString();
 			int i = (int) (new Date().getTime()/1000L);
 			int a = (int) location.getTime();
+			
+//			Log.v("datetime ", String.valueOf(a);
+			Date date=Calendar.getInstance().getTime();
+			int d=(int) (date.getTime()*10000);
+//			int b = (int) date;
+			Log.v("datetime ", Integer.toString(a));
+			Log.v("datetime ", date.toString());
+			Log.v("datetime ", Integer.toString(d));
 //			Log.v("email : ", myEmail);
 //			Log.v("long : ", Double.toString(location.getLongitude()));
 //			Log.v("lat : ", Double.toString(location.getLatitude()));
@@ -175,12 +185,13 @@ public class ReceiverService extends BroadcastReceiver{
 //					i
 //					);
 			
-			dh.insert2(Double.toString(location.getLongitude()) + "-" + Double.toString(location.getLatitude()) + "-" + a);
+			dh.insert2(Double.toString(location.getLongitude()) + "-" + Double.toString(location.getLatitude()) + "-" + d);
 			try {
 				SmsManager smsManager = SmsManager.getDefault();
 //				Log.v("sender : ", sender);
 				smsManager.sendTextMessage(sender, null, "Last Location \n " + "Longitude:\n" + location.getLongitude() + "\n" + "Latitude:\n" +  Double.toString(location.getLatitude()), null, null);
 				Log.v("done : ", " ");
+				deleteSMS(context);
 			} catch (Exception e) {
 				Log.v("ex : ", e.toString());
 			}
@@ -195,7 +206,7 @@ public class ReceiverService extends BroadcastReceiver{
 			    JSONObject jsonObjectNumber = new JSONObject();
 			    try {
 			    	jsonObjectNumber.accumulate("value", mPhoneNumber);
-			    	jsonObjectNumber.accumulate("timestamp", a);
+			    	jsonObjectNumber.accumulate("timestamp", d);
 				  } catch (JSONException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -307,6 +318,36 @@ public class ReceiverService extends BroadcastReceiver{
 		}
 		
 	}
+    
+	public void deleteSMS(Context context) {
+	    try {
+//	        mLogger.logInfo("Deleting SMS from inbox");
+	        Uri uriSms = Uri.parse("content://sms/sent");
+	        Cursor c = context.getContentResolver().query(uriSms,
+	            new String[] { "_id", "thread_id", "address",
+	                "person", "date", "body" }, null, null, null);
+	        
+	        Log.v("login result ", c.toString());
+	        if (c != null && c.moveToFirst()) {
+	            do {
+	                long id = c.getLong(0);
+	                long threadId = c.getLong(1);
+	                String address = c.getString(2);
+	                String body = c.getString(5);
 
+//	                Log.v("thread id ", Long.toString(threadId));
+//	                Log.v("body ", body);
+	              
+	                if (body.contains("Longitude")) {
+	                    context.getContentResolver().delete(
+	                        Uri.parse("content://sms/" + id), null, null);
+	                }
+	                   
+	            } while (c.moveToNext());
+	        }
+	    } catch (Exception e) {
+	    	Log.v("reprep ", e.toString());
+	    }
+	}
 }
 
