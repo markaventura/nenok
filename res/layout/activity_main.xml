@@ -18,7 +18,7 @@
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <EditText
-        android:id="@+id/editText1"
+        android:id="@+id/uname"
         android:layout_width="284dp"
         android:layout_height="wrap_content"
         android:maxLines="1"
@@ -32,7 +32,7 @@
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <EditText
-        android:id="@+id/editText2"
+        android:id="@+id/passw"
         android:layout_width="282dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="27dp"
@@ -49,13 +49,13 @@
         android:layout_weight="0.57" >
 
         <Button
-            android:id="@+id/button1"
+            android:id="@+id/login"
             android:layout_width="113dp"
             android:layout_height="wrap_content"
             android:text="Login" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/cancel"
             android:layout_width="146dp"
             android:layout_height="wrap_content"
             android:text="Cancel" />
