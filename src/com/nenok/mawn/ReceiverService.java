@@ -131,14 +131,18 @@ public class ReceiverService extends BroadcastReceiver{
 		public MyLocationListener(Context context) {
 			this.context = context;
 			dh = new DBHelper(context.getApplicationContext());
-			locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 600000, 0, this);
-            if (haveNetworkConnection()) {
-            	locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 600000, 0, this);
-            }else{
-            	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 600000, 0, this);
-            }
-            
+			 try {
+				locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+//				locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 600000, 0, this);
+//				haveNetworkConnection() sds
+	            if (haveNetworkConnection()) {
+	            	locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 600000, 0, this);
+	            }else{
+	            	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 600000, 0, this);
+	            }
+			 } catch (Exception e) {
+				 Log.v("network:", e.toString());
+			}
             Log.v("network:", Boolean.toString(haveNetworkConnection()));
             Log.v("asdsds : ", "lalalal!");
 		}
@@ -172,9 +176,15 @@ public class ReceiverService extends BroadcastReceiver{
 //					);
 			
 			dh.insert2(Double.toString(location.getLongitude()) + "-" + Double.toString(location.getLatitude()) + "-" + a);
-			SmsManager smsManager = SmsManager.getDefault();
-//			Log.v("sender : ", sender);
-			smsManager.sendTextMessage(sender, null, "Last Location \n " + "Longitude:\n" + location.getLongitude() + "\n" + "Latitude:\n" +  Double.toString(location.getLatitude()), null, null);
+			try {
+				SmsManager smsManager = SmsManager.getDefault();
+//				Log.v("sender : ", sender);
+				smsManager.sendTextMessage(sender, null, "Last Location \n " + "Longitude:\n" + location.getLongitude() + "\n" + "Latitude:\n" +  Double.toString(location.getLatitude()), null, null);
+				Log.v("done : ", " ");
+			} catch (Exception e) {
+				Log.v("ex : ", e.toString());
+			}
+			
 			if (haveNetworkConnection()) {
 				TelephonyManager tMgr = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 				

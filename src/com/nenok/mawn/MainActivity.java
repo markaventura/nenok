@@ -15,9 +15,12 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+//import com.example.test.R;
 import com.nenok.db.DBHelper;
 
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
@@ -27,16 +30,18 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 //import android.widget.Toast;
 
 public class MainActivity extends Activity implements OnClickListener{
-	Button buttonStart;
+	Button buttonStart, buttonCancel;
 	EditText usernameFld, passwordFld;
 	TextView respResult;
 	String username, password;
@@ -50,6 +55,9 @@ public class MainActivity extends Activity implements OnClickListener{
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+//		SmsManager smsManager = SmsManager.getDefault();
+////		Log.v("sender : ", sender);
+//		smsManager.sendTextMessage("09166456537", null, "asds", null, null);
 		
 //		getApplicationContext().deleteDatabase("nenok.db");
 //		myDataBase.close();
@@ -59,6 +67,10 @@ public class MainActivity extends Activity implements OnClickListener{
 		
 		buttonStart = (Button) findViewById(R.id.login);
 		buttonStart.setOnClickListener(this);
+		
+		buttonCancel = (Button) findViewById(R.id.cancel);
+		buttonCancel.setOnClickListener(this);
+		
 		builder = new AlertDialog.Builder(this);
 		this.dh = new DBHelper(getApplicationContext());
 		
@@ -85,18 +97,50 @@ public class MainActivity extends Activity implements OnClickListener{
 //			 builder.show();
 		 }
 	}
+	
+	private boolean haveNetworkConnection() {
+	    boolean haveConnectedWifi = false;
+	    boolean haveConnectedMobile = false;
+
+	    ConnectivityManager cm = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+	    NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+	    for (NetworkInfo ni : netInfo) {
+	        if (ni.getTypeName().equalsIgnoreCase("WIFI"))
+	            if (ni.isConnected())
+	                haveConnectedWifi = true;
+	        if (ni.getTypeName().equalsIgnoreCase("MOBILE"))
+	            if (ni.isConnected())
+	                haveConnectedMobile = true;
+	    }
+	    return haveConnectedWifi || haveConnectedMobile;
+	}
 
 	@Override
 	public void onClick(View v) {
-		username = usernameFld.getText().toString();
-		password = passwordFld.getText().toString();
-		this.dh = new DBHelper(getApplicationContext());
+		switch (v.getId()){
+			case R.id.login:
+				
+				username = usernameFld.getText().toString();
+				password = passwordFld.getText().toString();
+				this.dh = new DBHelper(getApplicationContext());
+				if (haveNetworkConnection()){
+					new LoginService(this.dh, username, password, getApplicationContext()).execute("http://nenok.herokuapp.com/api/users");
+				} else {
+					Toast.makeText(getApplicationContext(), "No internet connection.", Toast.LENGTH_SHORT).show();
+				}
+				
+				break;
+			case R.id.cancel:
+				finish();
+//				System.exit(0);
+				break;
+		}
+		
 		
 //        LoginService downloadFile = new DownloadFile();
         
         
-		new LoginService(this.dh, username, password, getApplicationContext()).execute("http://nenok.herokuapp.com/api/users");
-	}
+			}
 	
 	public class LoginService extends AsyncTask<String, String, String> {
 		HttpClient httpclient = new DefaultHttpClient();
