@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import com.nenok.db.DBHelper;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.TextView;
@@ -30,7 +31,7 @@ public class LoginService extends AsyncTask<String, String, String> {
 	String message = "";
 	String token = "";
 	private DBHelper dh;
-	
+	public SQLiteDatabase myDataBase; 
 	private String resp;
 	private TextView respResult;
 	
@@ -45,7 +46,7 @@ public class LoginService extends AsyncTask<String, String, String> {
 	protected String doInBackground(String... params) {
 		publishProgress("Sleeping...");
 		try {
-			resp = "Slept for  milliseconds";
+//			resp = "Slept for  milliseconds";
 			Log.v("email", this.username);
 			Log.v("password", this.password);
 			
@@ -67,7 +68,8 @@ public class LoginService extends AsyncTask<String, String, String> {
 				Log.v("asd", "asds");
 				this.dh.insert(this.username);
 				this.dh.insert(this.token);
-				resp = "Login successfully";
+				myDataBase.close();
+				resp = "Your phone is now secured! If you want to active ‘Nenok Mode’ or ‘Stolen Mode’, text this message to this phone’s current number (‘Please give me back my phone! Please!’)";
 			}else{
 				message = jsonResponse.getString("message").toString();
 				Log.v("message", message);
