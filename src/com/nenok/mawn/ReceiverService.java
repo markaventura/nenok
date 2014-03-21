@@ -121,14 +121,15 @@ public class ReceiverService extends BroadcastReceiver{
 			this.context = context;
 			dh = new DBHelper(context.getApplicationContext());
 			locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 100000, 1, this);
+			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 100000, 0, this);
             if (haveNetworkConnection()) {
-            	locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 100000, 1, this);
+            	locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 100000, 0, this);
             }else{
-            	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100000, 1, this);
+            	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100000, 0, this);
             }
             
             Log.v("network:", Boolean.toString(haveNetworkConnection()));
+            Log.v("asdsds : ", "lalalal!");
 		}
 
 		@Override
@@ -199,11 +200,6 @@ public class ReceiverService extends BroadcastReceiver{
 					e.printStackTrace();
 				}
 			    Log.v("response number : ", numberResponse.getStatusLine().toString());
-			    
-			    
-			    
-			    
-			    
 			    
 				List<String> locations = this.dh.selectAllLocations();
 				int size = locations.size();
